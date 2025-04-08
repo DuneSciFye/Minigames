@@ -2,8 +2,10 @@ package me.dunescifye.minigames;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
+import dev.jorel.commandapi.CommandAPI;
+import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import me.dunescifye.minigames.minigames.MinigamePlayer;
-import me.dunescifye.minigames.minigames.Tower.Listeners;
+import me.dunescifye.minigames.minigames.Tower.Tower;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,6 +24,11 @@ public final class Minigames extends JavaPlugin {
     }
 
     @Override
+    public void onLoad() {
+        CommandAPI.onLoad(new CommandAPIBukkitConfig(this));
+    }
+
+    @Override
     public void onEnable() {
         plugin = this;
         Logger logger = this.getLogger();
@@ -36,7 +43,8 @@ public final class Minigames extends JavaPlugin {
             worldManager = core.getMVWorldManager();
         }
 
-        Bukkit.getPluginManager().registerEvents(new Listeners(), this);
+        CommandAPI.onEnable();
+        Tower.setup();
 
     }
 
@@ -44,5 +52,7 @@ public final class Minigames extends JavaPlugin {
     public void onDisable() {
         Logger logger = this.getLogger();
         logger.info("Minigames plugin shutting down!");
+
+        CommandAPI.onDisable();
     }
 }
