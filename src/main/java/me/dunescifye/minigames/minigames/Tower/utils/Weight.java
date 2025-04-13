@@ -6,7 +6,7 @@ import org.bukkit.NamespacedKey;
 public class Weight {
 
     public static NamespacedKey weightKey = new NamespacedKey("score", "score-weight");
-    public static Key attributeKey = Key.key("score-weight");
+    public static Key attributeKey = Key.key("score", "score-weight");
 
 
 }

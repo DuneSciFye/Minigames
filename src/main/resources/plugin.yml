@@ -4,3 +4,5 @@ main: me.dunescifye.minigames.Minigames
 api-version: '1.21'
 depend:
   - Multiverse-Core
+  - ExecutableItems
+  - SCore

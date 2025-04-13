@@ -7,41 +7,53 @@ import java.util.ArrayList;
 
 public class VanillaAttribute {
 
-    public static final NamespacedKey attackDamageBaseKey = new NamespacedKey("score", "score-attack-damage-base");
-    public static final NamespacedKey attackDamageMultKey = new NamespacedKey("score", "score-attack-damage-mult");
-    public static final NamespacedKey attackDamageDefaultKey = new NamespacedKey("minecraft", "595adcc3-fe87-461d-a93d-5a02c3bdec20");
-
-    public static final NamespacedKey attackKnockbackBaseKey = new NamespacedKey("score", "score-attack-knockback-base");
-    public static final NamespacedKey attackKnockbackMultKey = new NamespacedKey("score", "score-attack-knockback-mult");
-    public static final NamespacedKey attackKnockbackDefaultKey = new NamespacedKey("minecraft", "d754df03-1ec5-4267-a5d6-d8dc0d0f3259");
-
-    public static final NamespacedKey attackSpeedBaseKey = new NamespacedKey("score", "score-attack-speed-base");
-    public static final NamespacedKey attackSpeedMultKey = new NamespacedKey("score", "score-attack-speed-mult");
-    public static final NamespacedKey attackSpeedDefaultKey = new NamespacedKey("minecraft", "742f1740-c870-43ab-b6de-33dd9553fb6e");
-
-
     public final NamespacedKey baseKey;
-    public final NamespacedKey multKey;
-    public final NamespacedKey defaultKey;
+    public final NamespacedKey growthKey;
+    public final NamespacedKey decayKey;
+    public final NamespacedKey defaultKey = new NamespacedKey("minecraft", "ad920d87-b922-4b4e-800e-a70dc2caa583");
+    public final NamespacedKey maxKey;
     public final Attribute attribute;
     public final String name;
-    public final double defaultValue;
 
-    VanillaAttribute(NamespacedKey baseKey, NamespacedKey multKey, NamespacedKey defaultKey, Attribute attribute, String name, double defaultValue) {
-        this.baseKey = baseKey;
-        this.multKey = multKey;
-        this.defaultKey = defaultKey;
+    VanillaAttribute(Attribute attribute, String name) {
+        this.baseKey = new NamespacedKey("score", "score-" + name + "-base");
+        this.growthKey = new NamespacedKey("score", "score-" + name + "-growth");
+        this.decayKey = new NamespacedKey("score", "score-" + name + "-decay");
+        this.maxKey = new NamespacedKey("score", "score-" + name + "-max");
         this.attribute = attribute;
         this.name = name;
-        this.defaultValue = defaultValue;
     }
 
     public static ArrayList<VanillaAttribute> getVanillaAttributes() {
         ArrayList<VanillaAttribute> attributeKeys = new ArrayList<>();
 
-        attributeKeys.add(new VanillaAttribute(attackDamageBaseKey, attackDamageMultKey, attackDamageDefaultKey, Attribute.ATTACK_DAMAGE, "attack_damage", 1.0));
-        attributeKeys.add(new VanillaAttribute(attackKnockbackBaseKey, attackKnockbackMultKey, attackKnockbackDefaultKey, Attribute.ATTACK_KNOCKBACK, "attack_knockback", 0.0));
-        attributeKeys.add(new VanillaAttribute(attackSpeedBaseKey, attackSpeedMultKey, attackSpeedDefaultKey, Attribute.ATTACK_SPEED, "attack_speed", 4.0));
+        attributeKeys.add(new VanillaAttribute(Attribute.ATTACK_DAMAGE, "attack_damage"));
+        attributeKeys.add(new VanillaAttribute(Attribute.ATTACK_KNOCKBACK, "attack_knockback"));
+        attributeKeys.add(new VanillaAttribute(Attribute.ATTACK_SPEED, "attack_speed"));
+        attributeKeys.add(new VanillaAttribute(Attribute.ARMOR, "armor"));
+        attributeKeys.add(new VanillaAttribute(Attribute.ARMOR_TOUGHNESS, "armor_toughness"));
+        attributeKeys.add(new VanillaAttribute(Attribute.SCALE, "scale"));
+        attributeKeys.add(new VanillaAttribute(Attribute.BLOCK_BREAK_SPEED, "block_break_speed"));
+        attributeKeys.add(new VanillaAttribute(Attribute.BLOCK_INTERACTION_RANGE, "block_interaction_range"));
+        attributeKeys.add(new VanillaAttribute(Attribute.BURNING_TIME, "burning_time"));
+        attributeKeys.add(new VanillaAttribute(Attribute.ENTITY_INTERACTION_RANGE, "entity_interaction_range"));
+        attributeKeys.add(new VanillaAttribute(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE, "explosion_knockback_resistance"));
+        attributeKeys.add(new VanillaAttribute(Attribute.FALL_DAMAGE_MULTIPLIER, "fall_damage_multiplier"));
+        attributeKeys.add(new VanillaAttribute(Attribute.GRAVITY, "gravity"));
+        attributeKeys.add(new VanillaAttribute(Attribute.JUMP_STRENGTH, "jump_strength"));
+        attributeKeys.add(new VanillaAttribute(Attribute.KNOCKBACK_RESISTANCE, "knockback_resistance"));
+        attributeKeys.add(new VanillaAttribute(Attribute.MAX_ABSORPTION, "max_absorption"));
+        attributeKeys.add(new VanillaAttribute(Attribute.MAX_HEALTH, "max_health"));
+        attributeKeys.add(new VanillaAttribute(Attribute.MINING_EFFICIENCY, "mining_efficiency"));
+        attributeKeys.add(new VanillaAttribute(Attribute.MOVEMENT_EFFICIENCY, "movement_efficiency"));
+        attributeKeys.add(new VanillaAttribute(Attribute.MOVEMENT_SPEED, "movement_speed"));
+        attributeKeys.add(new VanillaAttribute(Attribute.OXYGEN_BONUS, "oxygen_bonus"));
+        attributeKeys.add(new VanillaAttribute(Attribute.SAFE_FALL_DISTANCE, "safe_fall_distance"));
+        attributeKeys.add(new VanillaAttribute(Attribute.SNEAKING_SPEED, "sneaking_speed"));
+        attributeKeys.add(new VanillaAttribute(Attribute.STEP_HEIGHT, "step_height"));
+        attributeKeys.add(new VanillaAttribute(Attribute.SUBMERGED_MINING_SPEED, "submerged_mining_speed"));
+        attributeKeys.add(new VanillaAttribute(Attribute.SWEEPING_DAMAGE_RATIO, "sweeping_damage_ratio"));
+        attributeKeys.add(new VanillaAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY, "water_movement_efficiency"));
 
         return attributeKeys;
     }

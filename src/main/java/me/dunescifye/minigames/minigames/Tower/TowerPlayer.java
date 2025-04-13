@@ -1,5 +1,6 @@
 package me.dunescifye.minigames.minigames.Tower;
 
+import me.dunescifye.minigames.Minigames;
 import me.dunescifye.minigames.Utils.Utils;
 import me.dunescifye.minigames.minigames.MinigamePlayer;
 import me.dunescifye.minigames.minigames.Tower.utils.*;
@@ -13,9 +14,11 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static me.dunescifye.minigames.Minigames.minigamePlayers;
@@ -33,9 +36,12 @@ import static me.dunescifye.minigames.minigames.Tower.utils.Weight.weightKey;
 public class TowerPlayer extends MinigamePlayer {
 
     public final Player player;
+
     private double maxStamina = 20;
     private double stamina = 20;
     private double weight = 0;
+
+    private boolean recoveringStamina = false;
 
     public TowerPlayer(Player player) {
         this.player = player;
@@ -51,12 +57,36 @@ public class TowerPlayer extends MinigamePlayer {
     }
 
     public void reduceStamina(final double amount) {
-        stamina -= amount;
+        stamina = Math.max(0, stamina - amount);
         calculateVisualStamina();
+
+        if (recoveringStamina) return;
+
+        recoveringStamina = true;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    this.cancel();
+                    recoveringStamina = false;
+                }
+
+                else if (player.isSprinting()) {
+                    reduceStamina(1);
+                } else {
+                    recoverStamina(0.5);
+                    if (stamina >= maxStamina) {
+                        this.cancel();
+                        recoveringStamina = false;
+                    }
+                }
+
+            }
+        }.runTaskTimer(Minigames.getPlugin(), 20L, 20L);
     }
 
     public void recoverStamina(final double amount) {
-        stamina += amount;
+        stamina = Math.min(maxStamina, stamina + amount);
         calculateVisualStamina();
     }
 
@@ -117,53 +147,63 @@ public class TowerPlayer extends MinigamePlayer {
             xpNeeded += 5;
         }
 
-        // Run command if level has changed
+        // Don't run changes if level hasn't changed
         Double initialLevel = pdc.get(levelKey, PersistentDataType.DOUBLE);
-        if (!level.equals(initialLevel)) {
-            String playerName = player.getName();
-            // Run commands after setting meta
-            ArrayList<String> commandsToRun = new ArrayList<>(List.of("ei console-modification set variable " + playerName + " " + slot + " level " + level));
+        if (level.equals(initialLevel)) return;
 
-            // Updating item's vanilla attributes such as damage, attack knockback, attack speed
-            for (VanillaAttribute attributeKey : getVanillaAttributes()) {
-                Double base = pdc.get(attributeKey.baseKey, PersistentDataType.DOUBLE);
-                Double mult = pdc.get(attributeKey.multKey, PersistentDataType.DOUBLE);
-                if (base == null || mult == null) continue;
+        String playerName = player.getName();
+        // Run commands after setting meta
+        ArrayList<String> commandsToRun = new ArrayList<>(List.of("ei console-modification set variable " + playerName + " " + slot + " level " + level));
 
-                double newValue = base + mult * level;
-                AttributeModifier attributeModifier = new AttributeModifier(attributeKey.defaultKey, newValue, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.MAINHAND);
+        // Updating item's vanilla attributes such as damage, attack knockback, attack speed
+        for (VanillaAttribute attributeKey : getVanillaAttributes()) {
+            Double base = pdc.get(attributeKey.baseKey, PersistentDataType.DOUBLE);
+            Double growth = pdc.get(attributeKey.growthKey, PersistentDataType.DOUBLE);
+            Double max = pdc.get(attributeKey.maxKey, PersistentDataType.DOUBLE);
+            if (base == null || growth == null || max == null) continue;
 
-                meta.removeAttributeModifier(attributeKey.attribute, attributeModifier);
-                meta.addAttributeModifier(attributeKey.attribute, attributeModifier);
+            double newValue = max - (max - base) * (Math.pow(growth, level));
 
-                commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + attributeKey.name + " " + smartRound(attributeKey.defaultValue + newValue));
+            // Keep the Operation and Slot Group of Attributes
+            Collection<AttributeModifier> attributeModifiers = meta.getAttributeModifiers(attributeKey.attribute);
+            if (attributeModifiers != null) {
+                for (AttributeModifier modifier : attributeModifiers) {
+                    if (modifier.getKey().equals(attributeKey.defaultKey)) {
+                        AttributeModifier attributeModifier = new AttributeModifier(attributeKey.defaultKey, newValue, modifier.getOperation(), modifier.getSlotGroup());
+                        meta.removeAttributeModifier(attributeKey.attribute, attributeModifier);
+                        meta.addAttributeModifier(attributeKey.attribute, attributeModifier);
+                        break;
+                    }
+                }
             }
 
-            // Decay formulas for non-vanilla attributes such as cooldown
-            for (DecayAttribute decayAttribute : getDecayAttributes()) {
-                Double base = pdc.get(decayAttribute.baseKey, PersistentDataType.DOUBLE);
-                Double decay = pdc.get(decayAttribute.decayKey, PersistentDataType.DOUBLE);
-                Double min = pdc.get(decayAttribute.minKey, PersistentDataType.DOUBLE);
-                if (base == null || decay == null || min == null) continue;
-
-                double newValue = min + (base - min) * (Math.pow(decay, level));
-                commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + decayAttribute.name + " " + smartRound(newValue));
-            }
-
-            // Growth formulas for non-vanilla growth attributes such as range
-            for (GrowthAttribute growthAttribute : getGrowthAttributes()) {
-                Double base = pdc.get(growthAttribute.baseKey, PersistentDataType.DOUBLE);
-                Double growth = pdc.get(growthAttribute.growthKey, PersistentDataType.DOUBLE);
-                Double max = pdc.get(growthAttribute.maxKey, PersistentDataType.DOUBLE);
-                if (base == null || growth == null || max == null) continue;
-
-                double newValue = max - (max - base) * (Math.pow(growth, level));
-                commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + growthAttribute.name + " " + smartRound(newValue));
-            }
-
-            item.setItemMeta(meta);
-            Utils.runConsoleCommands(commandsToRun);
+            commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + attributeKey.name + " " + smartRound(newValue));
         }
+
+        // Decay formulas for non-vanilla attributes such as cooldown
+        for (DecayAttribute decayAttribute : getDecayAttributes()) {
+            Double base = pdc.get(decayAttribute.baseKey, PersistentDataType.DOUBLE);
+            Double decay = pdc.get(decayAttribute.decayKey, PersistentDataType.DOUBLE);
+            Double min = pdc.get(decayAttribute.minKey, PersistentDataType.DOUBLE);
+            if (base == null || decay == null || min == null) continue;
+
+            double newValue = min + (base - min) * (Math.pow(decay, level));
+            commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + decayAttribute.name + " " + smartRound(newValue));
+        }
+
+        // Growth formulas for non-vanilla growth attributes such as range
+        for (GrowthAttribute growthAttribute : getGrowthAttributes()) {
+            Double base = pdc.get(growthAttribute.baseKey, PersistentDataType.DOUBLE);
+            Double growth = pdc.get(growthAttribute.growthKey, PersistentDataType.DOUBLE);
+            Double max = pdc.get(growthAttribute.maxKey, PersistentDataType.DOUBLE);
+            if (base == null || growth == null || max == null) continue;
+
+            double newValue = max - (max - base) * (Math.pow(growth, level));
+            commandsToRun.add("ei console-modification set variable " + playerName + " " + slot + " " + growthAttribute.name + " " + smartRound(newValue));
+        }
+
+        item.setItemMeta(meta);
+        Utils.runConsoleCommands(commandsToRun);
     }
 
     public void calculateInventorySynergy() {
@@ -221,6 +261,7 @@ public class TowerPlayer extends MinigamePlayer {
                 item.setItemMeta(meta);
 
                 calculateItemLevel(item, slot);
+                System.out.println("set synergy of item in slot " + slot + " to " + synergyIncoming);
             }
         }
         calculateVisualXP(inventory.getItemInMainHand());
@@ -232,7 +273,7 @@ public class TowerPlayer extends MinigamePlayer {
 
         attributeInstance.removeModifier(attributeKey);
 
-        AttributeModifier attributeModifier = new AttributeModifier(weightKey, weight * -0.1, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY);
+        AttributeModifier attributeModifier = new AttributeModifier(weightKey, weight * -0.001, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY);
         attributeInstance.addModifier(attributeModifier);
     }
 

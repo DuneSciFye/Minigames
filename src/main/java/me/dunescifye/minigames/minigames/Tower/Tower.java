@@ -1,6 +1,7 @@
 package me.dunescifye.minigames.minigames.Tower;
 
 import me.dunescifye.minigames.Minigames;
+import me.dunescifye.minigames.minigames.Tower.listeners.StaminaListener;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -26,6 +27,7 @@ public class Tower {
     public static void setup() {
         new Commands().register();
         Bukkit.getPluginManager().registerEvents(new Listeners(), Minigames.getPlugin());
+        Bukkit.getPluginManager().registerEvents(new StaminaListener(), Minigames.getPlugin());
     }
 
 }

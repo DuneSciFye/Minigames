@@ -1,67 +1,25 @@
 package me.dunescifye.minigames.minigames.Tower;
 
+import com.ssomar.score.api.executableitems.events.AddItemInPlayerInventoryEvent;
 import me.dunescifye.minigames.Minigames;
-import me.dunescifye.minigames.minigames.MinigamePlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import static me.dunescifye.minigames.Minigames.minigamePlayers;
 import static me.dunescifye.minigames.minigames.Tower.utils.Synergy.synergyIncomingKey;
 import static me.dunescifye.minigames.minigames.Tower.Tower.*;
 
 public class Listeners implements Listener {
-
-    // Stamina bar
-    @EventHandler
-    public void onPlayerSprint(PlayerToggleSprintEvent e) {
-        Player p = e.getPlayer();
-        MinigamePlayer minigamePlayer = minigamePlayers.get(p);
-        if (minigamePlayer == null) return;
-
-        if (minigamePlayer instanceof TowerPlayer towerPlayer) {
-            // To only have one loop
-            if (towerPlayer.getStamina() < towerPlayer.getMaxStamina())
-                return;
-
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (!p.isOnline())
-                        this.cancel();
-
-                    else if (p.isSprinting()) {
-                        towerPlayer.reduceStamina(1);
-                    } else {
-                        towerPlayer.recoverStamina(0.5);
-                        if (towerPlayer.getStamina() >= towerPlayer.getMaxStamina())
-                            this.cancel();
-                    }
-
-                }
-            }.runTaskTimer(Minigames.getPlugin(), 0L, 20L);
-        }
-    }
-
-    // Disable vanilla food changes
-    @EventHandler
-    public void onPlayerFoodChangeNaturally(FoodLevelChangeEvent e) {
-        if (e.getEntity() instanceof Player p)
-            if (minigamePlayers.get(p) instanceof TowerPlayer)
-                e.setCancelled(true);
-    }
 
     @EventHandler
     public void onPlayerGainExperience(PlayerExpChangeEvent e) {
@@ -100,8 +58,8 @@ public class Listeners implements Listener {
         towerPlayer.calculateVisualXP(p.getInventory().getItem(e.getNewSlot()));
     }
 
-    // Do item synergies
-    @EventHandler(ignoreCancelled = true)
+    // Do item synergies, can't ignore cancelled event because EI cancels the event
+    @EventHandler
     public void onItemPickup(EntityPickupItemEvent e) {
         if (!(e.getEntity() instanceof Player p)) return;
         if (!(minigamePlayers.get(p) instanceof TowerPlayer towerPlayer)) return;
@@ -128,5 +86,11 @@ public class Listeners implements Listener {
         if (pdc.has(experienceKey, PersistentDataType.DOUBLE)) {
             towerPlayer.calculateInventorySynergy();
         }
+    }
+
+
+    @EventHandler
+    public void onGetEI(AddItemInPlayerInventoryEvent e) {
+        System.out.println("a");
     }
 }

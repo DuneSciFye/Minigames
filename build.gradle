@@ -23,6 +23,7 @@ dependencies {
     compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
     compileOnly 'com.onarandombox.multiversecore:multiverse-core:4.3.12' // Multiverse Core
     implementation "dev.jorel:commandapi-bukkit-shade:10.0.0" // CommandAPI
+    compileOnly files('src/main/resources/SCore.jar') // SCore
 }
 
 shadowJar {
